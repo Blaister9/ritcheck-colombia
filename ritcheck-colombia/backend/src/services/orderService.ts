@@ -351,7 +351,7 @@ export async function markOrderUploadedAndQueueAnalysis(
       customerEmail: order.customer_email,
     },
     {
-      jobId: `${orderId}:${jobRow.id}`,
+      jobId: `${orderId.replace(/-/g, '')}-${jobRow.id.replace(/-/g, '')}`,
       attempts: 3,
       backoff: { type: 'exponential', delay: 30_000 },
       removeOnComplete: 100,
