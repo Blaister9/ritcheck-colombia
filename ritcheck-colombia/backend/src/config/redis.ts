@@ -5,7 +5,7 @@
 // LLAMADO DESDE: workers, queues y middleware rateLimit
 // ==========================================
 
-import IORedis, { type RedisOptions } from 'ioredis';
+import { Redis, type RedisOptions } from 'ioredis';
 import { env, rateLimitRedisUrl } from './env.js';
 import { logger } from './logger.js';
 
@@ -18,8 +18,8 @@ const bullMqOptions: RedisOptions = {
   lazyConnect: false,
 };
 
-function attachLogging(client: IORedis, label: string) {
-  client.on('error', (err) => {
+function attachLogging(client: Redis, label: string) {
+  client.on('error', (err: Error) => {
     logger.error({ scope: 'redis', label, err: { name: err.name, message: err.message } }, 'Redis error');
   });
   client.on('reconnecting', (delay: number) => {
@@ -36,7 +36,7 @@ function attachLogging(client: IORedis, label: string) {
  * Llamar una vez por proceso y reutilizar.
  */
 export function createRedisConnection(label = 'bullmq') {
-  return attachLogging(new IORedis(env.REDIS_URL, bullMqOptions), label);
+  return attachLogging(new Redis(env.REDIS_URL, bullMqOptions), label);
 }
 
 /**
@@ -44,7 +44,7 @@ export function createRedisConnection(label = 'bullmq') {
  */
 export function createGeneralRedisConnection(label = 'general') {
   return attachLogging(
-    new IORedis(env.REDIS_URL, { lazyConnect: false, maxRetriesPerRequest: 3 }),
+    new Redis(env.REDIS_URL, { lazyConnect: false, maxRetriesPerRequest: 3 }),
     label,
   );
 }
@@ -55,7 +55,7 @@ export function createGeneralRedisConnection(label = 'general') {
  */
 export function createRateLimitRedisConnection() {
   return attachLogging(
-    new IORedis(rateLimitRedisUrl, { lazyConnect: false, maxRetriesPerRequest: 3 }),
+    new Redis(rateLimitRedisUrl, { lazyConnect: false, maxRetriesPerRequest: 3 }),
     'rate-limit',
   );
 }
@@ -67,7 +67,7 @@ export const redisConnection = createRedisConnection('bullmq-default');
  * Cierra todas las conexiones que se le pasen, ignorando errores. Usar en
  * graceful shutdown del proceso.
  */
-export async function closeRedisConnections(connections: IORedis[]): Promise<void> {
+export async function closeRedisConnections(connections: Redis[]): Promise<void> {
   await Promise.all(
     connections.map(async (conn) => {
       try {
@@ -85,7 +85,7 @@ export async function closeRedisConnections(connections: IORedis[]): Promise<voi
 /**
  * Ping rapido para healthchecks. Devuelve `true` si responde "PONG".
  */
-export async function pingRedis(connection: IORedis = redisConnection): Promise<boolean> {
+export async function pingRedis(connection: Redis = redisConnection): Promise<boolean> {
   try {
     const reply = await connection.ping();
     return reply === 'PONG';

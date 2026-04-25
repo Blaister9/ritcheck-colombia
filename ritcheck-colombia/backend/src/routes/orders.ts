@@ -73,7 +73,7 @@ ordersRouter.get(
   requireOrderAccess,
   async (req, res, next) => {
     try {
-      const status = await getOrderStatus(req.params.orderId);
+      const status = await getOrderStatus(req.params.orderId as string);
       return res.json(status);
     } catch (error) {
       return next(error);
@@ -88,7 +88,7 @@ ordersRouter.get(
   requireOrderAccess,
   async (req, res, next) => {
     try {
-      const report = await getOrderReport(req.params.orderId);
+      const report = await getOrderReport(req.params.orderId as string);
       return res.json(report);
     } catch (error) {
       return next(error);

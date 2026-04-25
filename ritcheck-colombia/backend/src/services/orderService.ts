@@ -8,7 +8,7 @@
 
 import { Queue } from 'bullmq';
 import crypto from 'node:crypto';
-import { env } from '../config/env.js';
+import { env, isDemoMode } from '../config/env.js';
 import { logger } from '../config/logger.js';
 import { redisConnection } from '../config/redis.js';
 import { supabaseAdmin } from '../config/supabase.js';
@@ -100,6 +100,10 @@ export const analysisQueue = new Queue<AnalysisJobData>(env.ANALYSIS_QUEUE_NAME,
  * Crea una orden en estado `pending_payment` y construye una URL de checkout
  * Bold. La URL se calcula desde backend con monto del plan; nunca se confia
  * en montos enviados por el cliente.
+ *
+ * Cuando DEMO_MODE=true en ambiente no-productivo, se omite Bold y se crea
+ * la orden directamente en estado `paid` para permitir que el frontend
+ * continue al upload sin pasar por el procesador de pagos.
  */
 export async function createOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
   const amountCop = planPricesCop[input.planId];
@@ -122,6 +126,77 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     );
 
   const orderId = crypto.randomUUID();
+
+  // ---- DEMO MODE ----
+  // En ambientes no-productivos (NODE_ENV=development, APP_ENV in {local,staging})
+  // con DEMO_MODE=true, omitimos la integracion con Bold y creamos la orden
+  // directamente como `paid`. El frontend (pago page) detectara el estado paid
+  // y redirigira automaticamente a /upload. No se generan webhooks ni rows en
+  // payments: el flujo es estrictamente para demos / QA.
+  if (isDemoMode) {
+    const nowIso = new Date().toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('orders')
+      .insert({
+        id: orderId,
+        plan_id: input.planId,
+        status: 'paid',
+        amount_cop: amountCop,
+        currency: env.BOLD_CURRENCY,
+        customer_email: input.customerEmail,
+        customer_name: input.customerName ?? null,
+        company_name_snapshot: input.companyName ?? null,
+        company_nit_snapshot: input.companyNit ?? null,
+        bold_checkout_id: null,
+        checkout_url: null,
+        paid_at: nowIso,
+        metadata: { demo: true },
+      })
+      .select('id, status, amount_cop, created_at')
+      .single();
+
+    if (error || !data) {
+      throw new OrderServiceError(
+        'ORDER_CREATE_FAILED',
+        'No fue posible crear la orden demo.',
+        500,
+        error,
+      );
+    }
+
+    await insertOrderEvent(orderId, 'order.created', {
+      planId: input.planId,
+      amountCop,
+      demo: true,
+    });
+    await insertOrderEvent(orderId, 'order.demo_paid', {
+      planId: input.planId,
+      amountCop,
+      paidAt: nowIso,
+    });
+
+    logger.info(
+      {
+        scope: 'orderService',
+        orderId,
+        planId: input.planId,
+        demoMode: true,
+      },
+      'Orden creada en DEMO_MODE: status paid sin pasar por Bold',
+    );
+
+    // checkoutUrl vacio: el frontend, al ver status=paid, redirige a /upload
+    // sin necesidad de visitar el portal de pagos. Lo dejamos como string
+    // vacio (no undefined) para mantener el contrato del tipo CreateOrderResult.
+    return {
+      orderId: data.id as string,
+      status: data.status as OrderStatus,
+      amountCop: data.amount_cop as number,
+      checkoutUrl: '',
+    };
+  }
+
+  // ---- FLUJO PRODUCTIVO (Bold) ----
   // Bold expone integraciones via API; aqui dejamos una URL placeholder que el
   // frontend usa para inicializar el widget. La integracion final con la API
   // de Bold (POST /v2/checkout/sessions o boton de pagos) se hace en

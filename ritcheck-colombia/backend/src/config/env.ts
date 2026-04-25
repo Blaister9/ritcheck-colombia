@@ -94,6 +94,12 @@ const envSchema = z.object({
   // Manual review MVP
   ENABLE_MANUAL_REVIEW: boolFromString.default(true),
   REVIEWER_EMAIL: z.string().email(),
+
+  // Demo mode: cuando true y el ambiente NO es produccion, POST /api/orders
+  // crea la orden con status 'paid' directamente sin generar checkout Bold,
+  // permitiendo continuar al upload sin pasar por el procesador de pagos.
+  // Pensado para demos comerciales y QA del flujo end-to-end.
+  DEMO_MODE: boolFromString.default(false),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -114,6 +120,13 @@ export const env = parsed.data;
 
 export const isProduction = env.NODE_ENV === 'production' || env.APP_ENV === 'production';
 export const isTest = env.NODE_ENV === 'test';
+
+// Demo mode efectivo: requiere DEMO_MODE=true Y un ambiente no-productivo.
+// Aceptamos NODE_ENV=development o APP_ENV en {local, staging} como
+// "no produccion". Esto bloquea cualquier filtracion accidental del bypass
+// de pagos a clientes reales.
+export const isDemoMode =
+  env.DEMO_MODE === true && !isProduction && env.NODE_ENV !== 'test';
 
 export const corsAllowedOrigins = env.CORS_ALLOWED_ORIGINS.split(',')
   .map((origin) => origin.trim())
@@ -142,7 +155,7 @@ function assertProductionCoherence() {
 
   for (const origin of corsAllowedOrigins) {
     if (origin.includes('localhost') || origin.startsWith('http://')) {
-      throw new Error(`[env] CORS_ALLOWED_ORIGINS no debe incluir orígenes locales/http en produccion: ${origin}`);
+      throw new Error(`[env] CORS_ALLOWED_ORIGINS no debe incluir origenes locales/http en produccion: ${origin}`);
     }
   }
 
@@ -151,6 +164,9 @@ function assertProductionCoherence() {
   }
   if (env.BOLD_SECRET_KEY.startsWith('TODO_') || env.BOLD_WEBHOOK_SECRET.startsWith('TODO_')) {
     throw new Error('[env] Claves Bold placeholder TODO_ no permitidas en produccion.');
+  }
+  if (env.DEMO_MODE) {
+    throw new Error('[env] DEMO_MODE=true no esta permitido en produccion. Desactivalo para deploy live.');
   }
 }
 

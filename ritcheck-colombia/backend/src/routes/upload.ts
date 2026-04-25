@@ -47,7 +47,7 @@ uploadRouter.post(
   requireOrderAccess,
   upload.single('document'),
   async (req, res, next) => {
-    const orderId = req.params.orderId;
+    const orderId = req.params.orderId as string;
     try {
       if (!req.file) {
         return res

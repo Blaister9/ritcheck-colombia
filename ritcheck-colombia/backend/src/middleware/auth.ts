@@ -81,7 +81,7 @@ export async function requireOrderAccess(
   res: Response,
   next: NextFunction,
 ) {
-  const orderId = req.params.orderId;
+  const orderId = req.params.orderId as string | undefined;
   if (!orderId) {
     return res.status(400).json({ code: 'MISSING_ORDER_ID', message: 'orderId requerido.' });
   }
