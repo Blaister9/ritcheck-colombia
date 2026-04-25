@@ -10,98 +10,402 @@ LLAMADO DESDE: backend/src/services/pdfGenerator.ts
 <html lang="es-CO">
   <head>
     <meta charset="utf-8" />
-    <title>Reporte RITCheck - {{ORDER_ID}}</title>
+    <title>Reporte RITCheck - {{ORDER_ID_SHORT}}</title>
     <style>
+      :root {
+        --color-primary: #147a52;
+        --color-primary-dark: #0d5238;
+        --color-text: #17202a;
+        --color-text-soft: #52616b;
+        --color-border: #d9e2ec;
+        --color-bg-soft: #f4f7f6;
+        --color-critical: #b91c1c;
+        --color-high: #d97706;
+        --color-medium: #2563eb;
+        --color-low: #16a34a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
-        font-family: Arial, Helvetica, sans-serif;
-        color: #17202a;
+        font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        color: var(--color-text);
         background: #ffffff;
+        font-size: 12px;
+        line-height: 1.5;
       }
 
       .page {
-        padding: 24px;
+        padding: 0;
       }
 
+      /* Header */
       .header {
-        border-bottom: 2px solid #147a52;
-        padding-bottom: 16px;
-        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 3px solid var(--color-primary);
+        padding-bottom: 14px;
+        margin-bottom: 22px;
       }
 
       .brand {
-        color: #147a52;
-        font-size: 24px;
-        font-weight: 700;
+        color: var(--color-primary);
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin: 0;
       }
 
-      .score {
+      .brand-subtitle {
+        margin: 2px 0 0;
+        font-size: 11px;
+        color: var(--color-text-soft);
+      }
+
+      .meta {
+        text-align: right;
+        font-size: 11px;
+        color: var(--color-text-soft);
+      }
+
+      .meta strong {
+        color: var(--color-text);
+      }
+
+      /* Cover / score */
+      .cover {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 24px;
+        align-items: center;
+        background: var(--color-bg-soft);
+        padding: 24px;
+        border-radius: 10px;
+        margin-bottom: 24px;
+        page-break-inside: avoid;
+      }
+
+      .score-circle {
+        --pct: 0;
+        position: relative;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: conic-gradient(
+          var(--score-color, var(--color-primary)) calc(var(--pct) * 1%),
+          #e5ecea 0
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .score-circle::before {
+        content: '';
+        position: absolute;
+        inset: 14px;
+        background: #ffffff;
+        border-radius: 50%;
+      }
+
+      .score-text {
+        position: relative;
+        text-align: center;
+      }
+
+      .score-value {
+        font-size: 44px;
+        font-weight: 800;
+        color: var(--color-primary-dark);
+        line-height: 1;
+      }
+
+      .score-label {
+        margin-top: 6px;
+        font-size: 11px;
+        color: var(--color-text-soft);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .cover-info h1 {
+        margin: 0 0 6px;
+        font-size: 20px;
+      }
+
+      .cover-info p {
+        margin: 0;
+        color: var(--color-text-soft);
+      }
+
+      .badges {
+        margin-top: 12px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .badge {
         display: inline-block;
-        margin-top: 16px;
-        padding: 12px 16px;
-        border: 1px solid #d9e2ec;
-        border-radius: 6px;
-        font-size: 28px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 10px;
         font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1px solid var(--color-border);
+        background: #ffffff;
+        color: var(--color-text);
       }
 
+      .badge-warning {
+        background: #fef3c7;
+        border-color: #facc15;
+        color: #92400e;
+      }
+
+      /* Sections */
       .section {
         margin: 22px 0;
         page-break-inside: avoid;
       }
 
       .section h2 {
-        font-size: 18px;
-        margin-bottom: 8px;
+        font-size: 16px;
+        margin: 0 0 10px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--color-border);
+        color: var(--color-primary-dark);
       }
 
+      .summary {
+        font-size: 12px;
+        color: var(--color-text);
+        white-space: pre-wrap;
+      }
+
+      /* Findings */
+      .finding {
+        border: 1px solid var(--color-border);
+        border-left-width: 4px;
+        border-radius: 6px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+        page-break-inside: avoid;
+      }
+
+      .finding[data-severity='critical'] {
+        border-left-color: var(--color-critical);
+      }
+
+      .finding[data-severity='high'] {
+        border-left-color: var(--color-high);
+      }
+
+      .finding[data-severity='medium'] {
+        border-left-color: var(--color-medium);
+      }
+
+      .finding[data-severity='low'] {
+        border-left-color: var(--color-low);
+      }
+
+      .finding-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+        gap: 10px;
+      }
+
+      .finding-title {
+        font-size: 13px;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .severity-pill {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #ffffff;
+      }
+
+      .severity-pill[data-severity='critical'] {
+        background: var(--color-critical);
+      }
+
+      .severity-pill[data-severity='high'] {
+        background: var(--color-high);
+      }
+
+      .severity-pill[data-severity='medium'] {
+        background: var(--color-medium);
+      }
+
+      .severity-pill[data-severity='low'] {
+        background: var(--color-low);
+      }
+
+      .finding-body p {
+        margin: 4px 0;
+      }
+
+      .finding-body strong {
+        color: var(--color-primary-dark);
+      }
+
+      .finding-excerpt,
+      .finding-suggestion {
+        background: var(--color-bg-soft);
+        border-radius: 4px;
+        padding: 8px 10px;
+        margin-top: 6px;
+        font-size: 11.5px;
+        white-space: pre-wrap;
+      }
+
+      .finding-suggestion {
+        background: #ecfdf5;
+        border-left: 3px solid var(--color-primary);
+      }
+
+      /* Tables (checklist / action plan) */
+      table.data {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11.5px;
+      }
+
+      table.data th,
+      table.data td {
+        border: 1px solid var(--color-border);
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      table.data th {
+        background: var(--color-bg-soft);
+        text-transform: uppercase;
+        font-size: 10px;
+        letter-spacing: 0.5px;
+        color: var(--color-primary-dark);
+      }
+
+      table.data tr {
+        page-break-inside: avoid;
+      }
+
+      .empty-state {
+        font-size: 11.5px;
+        color: var(--color-text-soft);
+        font-style: italic;
+      }
+
+      /* Footer / disclaimer */
       .disclaimer {
-        margin-top: 32px;
+        margin-top: 28px;
         padding-top: 12px;
-        border-top: 1px solid #d9e2ec;
-        font-size: 11px;
-        color: #52616b;
+        border-top: 1px solid var(--color-border);
+        font-size: 10.5px;
+        color: var(--color-text-soft);
+      }
+
+      .disclaimer p {
+        margin: 4px 0;
+      }
+
+      .legal-basis {
+        font-size: 10.5px;
+        color: var(--color-text-soft);
+      }
+
+      /* Print */
+      @page {
+        size: A4;
+        margin: 14mm 12mm;
       }
     </style>
   </head>
   <body>
     <main class="page">
       <header class="header">
-        <div class="brand">RITCheck Colombia</div>
-        <p>Reporte de analisis del Reglamento Interno de Trabajo</p>
-        <p>Orden: {{ORDER_ID}}</p>
+        <div>
+          <p class="brand">RITCheck Colombia</p>
+          <p class="brand-subtitle">Analisis del Reglamento Interno de Trabajo - Ley 2466 de 2025</p>
+        </div>
+        <div class="meta">
+          <div><strong>Orden:</strong> {{ORDER_ID_SHORT}}</div>
+          <div><strong>Plan:</strong> {{PLAN_NAME}}</div>
+          <div><strong>Generado:</strong> {{GENERATED_AT}}</div>
+        </div>
       </header>
 
-      <section class="section">
-        <h1>Resultado general</h1>
-        <div class="score">{{SCORE}} / 100</div>
+      <section class="cover" style="--pct: {{SCORE}}; --score-color: {{SCORE_COLOR}};">
+        <div class="score-circle" style="--pct: {{SCORE}}; --score-color: {{SCORE_COLOR}};">
+          <div class="score-text">
+            <div class="score-value">{{SCORE}}</div>
+            <div class="score-label">de 100</div>
+          </div>
+        </div>
+        <div class="cover-info">
+          <h1>{{COMPANY_NAME}}</h1>
+          <p>{{COMPANY_NIT_LINE}}</p>
+          <div class="badges">
+            <span class="badge">{{FINDINGS_COUNT}} hallazgos</span>
+            <span class="badge">{{CRITICAL_COUNT}} criticos</span>
+            <span class="badge">{{HIGH_COUNT}} altos</span>
+            {{MANUAL_REVIEW_BADGE}}
+          </div>
+        </div>
       </section>
 
       <section class="section">
         <h2>Resumen ejecutivo</h2>
-        <p>{{EXECUTIVE_SUMMARY}}</p>
+        <div class="summary">{{EXECUTIVE_SUMMARY}}</div>
       </section>
 
       <section class="section">
         <h2>Hallazgos juridicos</h2>
-        <!-- TODO: renderizar lista de findings con severidad, base legal, riesgo y texto sugerido. -->
+        {{FINDINGS_HTML}}
       </section>
 
       <section class="section">
-        <h2>Checklist</h2>
-        <!-- TODO: renderizar checklist accionable con responsables sugeridos. -->
+        <h2>Checklist accionable</h2>
+        {{CHECKLIST_HTML}}
       </section>
 
       <section class="section">
-        <h2>Plan de accion</h2>
-        <!-- TODO: renderizar plan de accion con fechas y prioridades. -->
+        <h2>Plan de accion sugerido</h2>
+        {{ACTION_PLAN_HTML}}
       </section>
 
       <footer class="disclaimer">
-        Este reporte es una herramienta tecnologica de apoyo y no reemplaza la revision juridica individual de un abogado laboral colombiano.
-        <!-- TODO: validar disclaimer final con abogado antes de cobrar clientes. -->
+        <p>
+          <strong>Aviso legal:</strong> Este reporte es una herramienta tecnologica de apoyo basada
+          en analisis automatizado del texto que nos compartiste. No constituye asesoria juridica
+          formal y no reemplaza la revision individual de un abogado laboral colombiano. Las
+          recomendaciones se basan en la normativa vigente al momento de generacion, incluyendo la
+          Ley 2466 de 2025 y el Codigo Sustantivo del Trabajo.
+        </p>
+        <p>
+          <strong>Confidencialidad:</strong> El documento original que cargaste se elimina
+          automaticamente {{RETENTION_DAYS}} dias despues de la entrega. Conservamos solo metadata
+          minima para auditoria.
+        </p>
+        <p>
+          Soporte: <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a> &middot; Orden completa:
+          {{ORDER_ID}}
+        </p>
       </footer>
     </main>
   </body>
 </html>
-
