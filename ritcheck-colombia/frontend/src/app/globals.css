@@ -1,0 +1,38 @@
+/* ==========================================
+ARCHIVO: frontend/src/app/globals.css
+PROPOSITO: Estilos globales, variables CSS y reset visual base
+DEPENDENCIAS: Tailwind CSS
+LLAMADO DESDE: frontend/src/app/layout.tsx
+========================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --primary: 156 72% 27%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 25% 95%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 215 25% 95%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 42 94% 55%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 156 72% 27%;
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* TODO: ajustar paleta final con identidad visual aprobada de RITCheck. */
+

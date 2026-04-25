@@ -1,0 +1,43 @@
+# ==========================================
+# ARCHIVO: .gitignore
+# PROPOSITO: Evita versionar dependencias, secretos y artefactos generados
+# DEPENDENCIAS: Git
+# LLAMADO DESDE: Control de versiones
+# ==========================================
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build outputs
+.next/
+dist/
+build/
+coverage/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Generated documents
+*.pdf
+tmp/
+uploads/
+reports/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# TODO: agregar ignores especificos de herramientas CI/CD si se incorporan.
+

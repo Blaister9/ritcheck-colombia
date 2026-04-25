@@ -1,0 +1,30 @@
+# ==========================================
+# ARCHIVO: docker-compose.yml
+# PROPOSITO: Servicios locales para desarrollo, principalmente Redis para BullMQ y rate limit
+# DEPENDENCIAS: Docker Desktop
+# LLAMADO DESDE: Desarrollo local
+# ==========================================
+
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: ritcheck-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # TODO: agregar servicio backend local cuando se defina Dockerfile.
+  # TODO: agregar servicio worker local cuando se defina Dockerfile.
+
+volumes:
+  redis-data:
+

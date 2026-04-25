@@ -1,0 +1,19 @@
+<!--
+==========================================
+ARCHIVO: templates/emails/processing.html
+PROPOSITO: Email de confirmacion de procesamiento iniciado
+DEPENDENCIAS: Resend, emailService.ts
+LLAMADO DESDE: sendProcessingEmail
+==========================================
+-->
+<!doctype html>
+<html lang="es-CO">
+  <body style="font-family: Arial, Helvetica, sans-serif; color: #17202a;">
+    <h1>Estamos analizando tu RIT</h1>
+    <p>Hola {{CUSTOMER_NAME}}, ya recibimos el documento de la orden {{ORDER_ID}}.</p>
+    <p>Te enviaremos otro correo cuando el reporte este listo para descarga.</p>
+    <p style="font-size: 12px; color: #52616b;">No respondas con documentos sensibles a este correo; usa siempre el enlace seguro de carga.</p>
+    <!-- TODO: agregar tiempo estimado segun cola y plan. -->
+  </body>
+</html>
+

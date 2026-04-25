@@ -1,0 +1,46 @@
+{
+  "_fileHeader": "ARCHIVO: backend/package.json | PROPOSITO: Configura dependencias y scripts del backend Express y workers | DEPENDENCIAS: Express, BullMQ, Supabase, Claude, OpenAI, Playwright | LLAMADO DESDE: Railway y desarrollo local",
+  "_todo": "TODO: fijar lockfile y separar paquetes de worker/API si el deploy lo requiere.",
+  "name": "ritcheck-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "worker:analysis": "tsx src/workers/analysisWorker.ts",
+    "worker:cleanup": "tsx src/workers/cleanupWorker.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@supabase/supabase-js": "^2.45.0",
+    "bullmq": "^5.30.2",
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
+    "ioredis": "^5.4.1",
+    "mammoth": "^1.8.0",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.73.1",
+    "pdf-parse": "^1.1.1",
+    "pino": "^9.5.0",
+    "pino-http": "^10.3.0",
+    "playwright": "^1.49.0",
+    "resend": "^4.0.0",
+    "uuid": "^11.0.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.10.1",
+    "@types/pdf-parse": "^1.1.4",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
+

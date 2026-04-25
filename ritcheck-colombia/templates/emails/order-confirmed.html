@@ -1,0 +1,20 @@
+<!--
+==========================================
+ARCHIVO: templates/emails/order-confirmed.html
+PROPOSITO: Email de pago confirmado y siguiente paso de carga del RIT
+DEPENDENCIAS: Resend, emailService.ts
+LLAMADO DESDE: sendOrderConfirmedEmail
+==========================================
+-->
+<!doctype html>
+<html lang="es-CO">
+  <body style="font-family: Arial, Helvetica, sans-serif; color: #17202a;">
+    <h1>Pago confirmado</h1>
+    <p>Hola {{CUSTOMER_NAME}}, recibimos tu pago de RITCheck Colombia para la orden {{ORDER_ID}}.</p>
+    <p>El siguiente paso es subir tu Reglamento Interno de Trabajo en PDF o DOCX.</p>
+    <p><a href="{{UPLOAD_URL}}">Subir documento</a></p>
+    <p style="font-size: 12px; color: #52616b;">Los documentos se eliminan automaticamente despues de 7 dias.</p>
+    <!-- TODO: incluir datos de soporte y NIT/facturacion cuando aplique. -->
+  </body>
+</html>
+
