@@ -352,7 +352,7 @@ export async function markOrderUploadedAndQueueAnalysis(
     },
     {
       jobId: `${orderId.replace(/-/g, '')}-${jobRow.id.replace(/-/g, '')}`,
-      attempts: 3,
+      attempts: 1,
       backoff: { type: 'exponential', delay: 30_000 },
       removeOnComplete: 100,
       removeOnFail: 500,

@@ -81,9 +81,9 @@ export function PricingCard({ plan }: PricingCardProps) {
   return (
     <article
       className={cn(
-        'relative flex flex-col rounded-2xl border bg-card p-7 text-card-foreground transition',
+        'relative flex flex-col rounded-md border bg-card p-6 text-card-foreground transition',
         plan.highlighted
-          ? 'border-primary shadow-elevated lg:scale-[1.03]'
+          ? 'border-primary shadow-elevated'
           : 'border-border shadow-card hover:shadow-elevated',
       )}
     >
@@ -97,8 +97,7 @@ export function PricingCard({ plan }: PricingCardProps) {
         <h3 className="text-xl font-bold text-primary">{plan.name}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{plan.audience}</p>
         <div className="mt-5 flex items-baseline gap-2">
-          <span className="text-4xl font-extrabold tracking-tight">{formatCop(plan.amountCop)}</span>
-          <span className="text-sm text-muted-foreground">+ IVA</span>
+          <span className="text-4xl font-extrabold">{formatCop(plan.amountCop)}</span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">Pago unico, sin suscripcion.</p>
       </header>
@@ -129,7 +128,7 @@ export function PricingCard({ plan }: PricingCardProps) {
               : 'border border-primary text-primary hover:bg-primary hover:text-primary-foreground',
           )}
         >
-          Contratar plan {plan.name}
+          Empezar análisis →
         </button>
       ) : (
         <form onSubmit={onSubmit} className="mt-auto space-y-3">

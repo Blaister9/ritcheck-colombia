@@ -11,7 +11,8 @@
     "start": "node dist/index.js",
     "worker:analysis": "tsx src/workers/analysisWorker.ts",
     "worker:cleanup": "tsx src/workers/cleanupWorker.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "worker": "tsx --env-file=.env src/workers/analysisWorker.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

@@ -10,38 +10,34 @@ LLAMADO DESDE: frontend/src/app/layout.tsx
 @tailwind utilities;
 
 :root {
-  /* Paleta institucional - azul oscuro y blanco. Inspirar confianza
-     a un empresario colombiano. No startup gringa. */
-  --background: 0 0% 100%;            /* blanco */
-  --foreground: 222 47% 14%;          /* texto principal: gris azulado oscuro */
+  /* Paleta RITCheck: azul institucional + ambar de urgencia + verde de validacion. */
+  --background: 0 0% 100%;
+  --foreground: 210 29% 24%;          /* #2C3E50 */
 
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 14%;
+  --card-foreground: 210 29% 24%;
 
-  /* Primary: azul navy institucional */
-  --primary: 217 56% 22%;             /* #1a3458 aprox */
+  --primary: 211 55% 23%;             /* #1B3A5C */
   --primary-foreground: 0 0% 100%;
 
-  /* Secondary: gris claro neutro */
-  --secondary: 215 22% 96%;
-  --secondary-foreground: 222 47% 14%;
+  --secondary: 210 33% 98%;           /* #F7F9FB */
+  --secondary-foreground: 210 29% 24%;
 
-  --muted: 215 22% 96%;
-  --muted-foreground: 215 16% 42%;
+  --muted: 210 33% 98%;
+  --muted-foreground: 211 20% 38%;
 
-  /* Accent: dorado sobrio (sin neon ni gradientes radicales) */
-  --accent: 38 65% 48%;               /* dorado institucional */
-  --accent-foreground: 0 0% 100%;
+  --accent: 36 79% 58%;               /* #E8A33D */
+  --accent-foreground: 210 29% 24%;
 
-  --destructive: 0 70% 45%;
+  --destructive: 6 64% 46%;           /* #C0392B */
   --destructive-foreground: 0 0% 100%;
 
-  --success: 152 50% 32%;
-  --warning: 38 75% 48%;
+  --success: 150 50% 35%;             /* #2D8659 */
+  --warning: 36 79% 58%;
 
-  --border: 214 28% 88%;
-  --input: 214 28% 88%;
-  --ring: 217 56% 30%;
+  --border: 210 25% 88%;
+  --input: 210 25% 88%;
+  --ring: 211 55% 23%;
 
   --radius: 0.5rem;
 }
@@ -81,7 +77,7 @@ h4 {
     'Helvetica Neue',
     Arial,
     sans-serif;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   font-weight: 700;
   color: hsl(var(--foreground));
 }

@@ -145,6 +145,8 @@ export function renderReportHtml(
     '{{ACTION_PLAN_HTML}}': renderActionPlan(analysis.actionPlan),
     '{{RETENTION_DAYS}}': String(env.DOCUMENT_RETENTION_DAYS),
     '{{SUPPORT_EMAIL}}': escapeHtml(supportEmail),
+    '{{REFERRAL_URL}}': escapeHtml(env.FRONTEND_URL),
+    '{{WHATSAPP_DISPLAY}}': escapeHtml(process.env.WHATSAPP_DISPLAY ?? '+57 [numero]'),
   };
 
   let html = template;

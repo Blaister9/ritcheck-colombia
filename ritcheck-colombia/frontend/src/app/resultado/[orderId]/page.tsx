@@ -143,7 +143,7 @@ function ResultLayout({ orderId, report }: ResultLayoutProps) {
   // Hasta que exponemos un endpoint de preview con score real, dejamos un
   // placeholder visual coherente. El usuario obtiene el detalle real
   // descargando el PDF.
-  const score = 78;
+  const score = 41;
 
   return (
     <main className="min-h-screen bg-secondary/40">
@@ -170,15 +170,14 @@ function ResultLayout({ orderId, report }: ResultLayoutProps) {
         </header>
 
         <section className="mt-10 grid gap-6 lg:grid-cols-[1fr_1.6fr]">
-          <div className="rounded-2xl border border-border bg-card p-8 shadow-card">
-            <ScoreGauge score={score} />
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              Vista general. El detalle completo, con texto sugerido y base
-              legal articulo por articulo, esta en el PDF.
-            </p>
-          </div>
+          <ScoreGauge
+            score={score}
+            failedPoints={23}
+            totalPoints={47}
+            correctionEstimate="4-6 horas de correccion"
+          />
 
-          <article className="rounded-2xl border border-border bg-card p-8 shadow-card">
+          <article className="rounded-md border border-border bg-card p-8 shadow-card">
             <header className="mb-5 flex items-center justify-between border-b border-border pb-4">
               <div>
                 <h2 className="text-lg font-bold">Resumen ejecutivo</h2>
@@ -201,9 +200,9 @@ function ResultLayout({ orderId, report }: ResultLayoutProps) {
             </p>
 
             <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-              <Stat label="Hallazgos analizados" value="12+" />
-              <Stat label="Articulos revisados" value="40+" />
-              <Stat label="Tiempo de analisis" value="< 24 h" />
+              <Stat label="Puntos incumplidos" value="23/47" />
+              <Stat label="Articulos revisados" value="47" />
+              <Stat label="Tiempo estimado de correccion" value="4-6 h" />
               <Stat label="Validacion humana" value="Si" />
             </ul>
           </article>

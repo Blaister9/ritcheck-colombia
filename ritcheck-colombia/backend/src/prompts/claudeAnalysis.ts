@@ -73,6 +73,11 @@ REGLAS DE VALIDEZ DEL JSON
 - "confidence" entre 0 y 1.
 - Sin trailing commas. Sin comentarios. Sin propiedades adicionales.
 - Si no encuentras hallazgos para alguna lista, devuelvela vacia ([]), no la omitas.
+
+CRÍTICO: El JSON debe cerrarse completamente. 
+Limita findings a máximo 8, cada suggestedText 
+máximo 200 caracteres. Prioriza los más críticos.
+El JSON truncado causa error fatal en el sistema.
 `;
 
 const PLAN_HINTS: Record<PlanId, string> = {

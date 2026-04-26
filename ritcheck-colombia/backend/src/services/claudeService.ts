@@ -21,6 +21,10 @@ const client = new Anthropic({
   timeout: env.CLAUDE_TIMEOUT_MS,
 });
 
+const MAX_RIT_TEXT_CHARS = 25_000;
+const CLAUDE_JSON_ONLY_INSTRUCTION =
+  'Responde ÚNICAMENTE con JSON válido. Sin texto antes ni después. Sin markdown. Sin explicaciones.';
+
 // ---- Schemas de validacion del JSON producido por Claude ----
 const severitySchema = z.enum(['critical', 'high', 'medium', 'low']);
 
@@ -87,19 +91,23 @@ export async function analyzeWithClaude(params: {
   }
 
   const startedAt = Date.now();
-  const userPrompt = buildClaudeAnalysisUserPrompt(params);
+  const truncatedRitText = ritText.slice(0, MAX_RIT_TEXT_CHARS);
+  const userPrompt = buildClaudeAnalysisUserPrompt({ ...params, ritText: truncatedRitText });
 
   const message = await callClaudeWithRetry(async () =>
     client.messages.create({
       model: env.CLAUDE_MODEL,
       max_tokens: env.CLAUDE_MAX_OUTPUT_TOKENS,
-      system: CLAUDE_ANALYSIS_SYSTEM_PROMPT,
+      system: `${CLAUDE_JSON_ONLY_INSTRUCTION}\n\n${CLAUDE_ANALYSIS_SYSTEM_PROMPT}`,
       messages: [{ role: 'user', content: userPrompt }],
     }),
   );
 
   const latencyMs = Date.now() - startedAt;
   const rawText = extractTextFromMessage(message);
+  console.log('=== RAW CLAUDE (primeros 3000 chars) ===');
+  console.log(rawText.slice(0, 3000));
+  console.log('=== FIN ===');
   const json = parseClaudeJson(rawText);
   const validated = validateClaudeJson(json);
 
@@ -163,6 +171,21 @@ function extractTextFromMessage(message: AnthropicLikeMessage): string {
  * - bloque ```json ... ```
  * - texto antes/despues del objeto
  */
+function repairTruncatedJson(text: string): string {
+  let t = text;
+  // Contar brackets sin cerrar
+  const opens = (t.match(/\[/g) || []).length;
+  const closes = (t.match(/\]/g) || []).length;
+  const openBraces = (t.match(/\{/g) || []).length;
+  const closeBraces = (t.match(/\}/g) || []).length;
+  // Remover trailing coma si existe
+  t = t.replace(/,\s*$/, '');
+  // Cerrar arrays y objetos faltantes
+  for (let i = 0; i < opens - closes; i++) t += ']';
+  for (let i = 0; i < openBraces - closeBraces; i++) t += '}';
+  return t;
+}
+
 export function parseClaudeJson(raw: string): unknown {
   const cleaned = stripJsonFences(raw);
   // 1) Intento directo
@@ -175,6 +198,7 @@ export function parseClaudeJson(raw: string): unknown {
     if (firstObj !== -1 && lastObj > firstObj) {
       const candidate = cleaned.slice(firstObj, lastObj + 1);
       try {
+        const repaired = repairTruncatedJson(candidate);        
         return JSON.parse(candidate);
       } catch (err) {
         throw new ClaudeServiceError(
@@ -191,10 +215,8 @@ export function parseClaudeJson(raw: string): unknown {
 
 function stripJsonFences(text: string): string {
   let t = text.trim();
-  if (t.startsWith('```')) {
-    t = t.replace(/^```(?:json)?\s*\n?/i, '');
-    t = t.replace(/\n?```$/i, '');
-  }
+  t = t.replace(/^```(?:json)?\s*\n?/i, '');
+  t = t.replace(/\n?```\s*$/i, '');
   return t.trim();
 }
 

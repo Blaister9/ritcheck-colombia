@@ -21,6 +21,10 @@ const client = new OpenAI({
   timeout: env.OPENAI_TIMEOUT_MS,
 });
 
+const OPENAI_MAX_OUTPUT_TOKENS = 4_000;
+const OPENAI_JSON_ONLY_INSTRUCTION =
+  'Responde unicamente con JSON valido que cumpla el schema. Sin markdown, sin explicacion y sin texto adicional.';
+
 // ---- Schemas ----
 const severitySchema = z.enum(['critical', 'high', 'medium', 'low']);
 
@@ -49,6 +53,68 @@ const openaiJsonSchema = z.object({
   scoreAdjustment: z.coerce.number().int().min(-50).max(50).default(0),
 });
 
+const openaiCritiqueResponseSchema: Record<string, unknown> = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['challengedFindings', 'missingRisks', 'scoreAdjustment'],
+  properties: {
+    challengedFindings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['findingId', 'concern', 'suggestedCorrection', 'severityAdjustment'],
+        properties: {
+          findingId: {
+            type: 'string',
+            description: 'ID del hallazgo criticado. Usar cadena vacia si no aplica.',
+          },
+          concern: { type: 'string' },
+          suggestedCorrection: { type: 'string' },
+          severityAdjustment: {
+            type: ['string', 'null'],
+            enum: ['critical', 'high', 'medium', 'low', null],
+          },
+        },
+      },
+    },
+    missingRisks: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: [
+          'id',
+          'title',
+          'severity',
+          'legalBasis',
+          'currentTextExcerpt',
+          'issue',
+          'risk',
+          'suggestedText',
+          'confidence',
+        ],
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' },
+          severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low'] },
+          legalBasis: { type: 'string' },
+          currentTextExcerpt: { type: 'string' },
+          issue: { type: 'string' },
+          risk: { type: 'string' },
+          suggestedText: { type: 'string' },
+          confidence: { type: 'number', minimum: 0, maximum: 1 },
+        },
+      },
+    },
+    scoreAdjustment: {
+      type: 'integer',
+      minimum: -20,
+      maximum: 10,
+    },
+  },
+};
+
 class OpenAIServiceError extends Error {
   readonly code: string;
   readonly retriable: boolean;
@@ -73,20 +139,28 @@ export async function critiqueWithOpenAI(
   const userPrompt = buildOpenAICritiqueUserPrompt({ ritText, claudeResult });
 
   const response = await callOpenAIWithRetry(async () =>
-    client.chat.completions.create({
+    client.responses.create({
       model: env.OPENAI_MODEL,
+      instructions: `${OPENAI_JSON_ONLY_INSTRUCTION}\n\n${OPENAI_CRITIQUE_SYSTEM_PROMPT}`,
+      input: userPrompt,
+      max_output_tokens: OPENAI_MAX_OUTPUT_TOKENS,
+      store: false,
       temperature: 0.2,
-      // Forzar JSON bien formado cuando el modelo soporta json_object.
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: OPENAI_CRITIQUE_SYSTEM_PROMPT },
-        { role: 'user', content: userPrompt },
-      ],
+      reasoning: { effort: 'low' },
+      text: {
+        format: {
+          type: 'json_schema',
+          name: 'openai_critique_result',
+          description: 'Critica adversarial estructurada del analisis juridico del RIT.',
+          schema: openaiCritiqueResponseSchema,
+          strict: true,
+        },
+      },
     }),
   );
 
   const latencyMs = Date.now() - startedAt;
-  const rawText = response.choices?.[0]?.message?.content?.trim() ?? '';
+  const rawText = extractResponseText(response);
   if (!rawText) {
     throw new OpenAIServiceError('EMPTY_RESPONSE', 'OpenAI no devolvio contenido.', false);
   }
@@ -94,8 +168,8 @@ export async function critiqueWithOpenAI(
   const json = parseOpenAIJson(rawText);
   const validated = validateOpenAIJson(json);
 
-  const inputTokens = response.usage?.prompt_tokens ?? 0;
-  const outputTokens = response.usage?.completion_tokens ?? 0;
+  const inputTokens = response.usage?.input_tokens ?? 0;
+  const outputTokens = response.usage?.output_tokens ?? 0;
 
   // Clamp de scoreAdjustment a [-20, 10] segun reglas del combiner.
   const clampedAdjustment = Math.max(-20, Math.min(10, validated.scoreAdjustment));
@@ -119,6 +193,7 @@ export async function critiqueWithOpenAI(
     provider: 'openai',
     challengedFindings: validated.challengedFindings.map((c) => ({
       ...c,
+      findingId: c.findingId?.trim() || undefined,
       severityAdjustment: c.severityAdjustment ?? undefined,
     })),
     missingRisks: validated.missingRisks,
@@ -157,6 +232,49 @@ export function parseOpenAIJson(raw: string): unknown {
     }
     throw new OpenAIServiceError('INVALID_JSON', 'OpenAI no devolvio JSON valido.', false);
   }
+}
+
+type OpenAIResponsesLikeResponse = {
+  id: string;
+  output_text?: string;
+  output?: Array<{
+    type?: string;
+    content?: Array<{
+      type?: string;
+      text?: string;
+      refusal?: string;
+    }>;
+  }>;
+  status?: string;
+  error?: { message?: string } | null;
+  incomplete_details?: { reason?: string } | null;
+};
+
+function extractResponseText(response: OpenAIResponsesLikeResponse): string {
+  if (response.status && response.status !== 'completed') {
+    throw new OpenAIServiceError(
+      'INCOMPLETE_RESPONSE',
+      response.error?.message ?? response.incomplete_details?.reason ?? `OpenAI response status: ${response.status}`,
+      false,
+    );
+  }
+
+  if (typeof response.output_text === 'string' && response.output_text.trim()) {
+    return response.output_text.trim();
+  }
+
+  const text = response.output
+    ?.flatMap((item) => item.content ?? [])
+    .map((content) => {
+      if (content.type === 'refusal' && content.refusal) {
+        throw new OpenAIServiceError('REFUSAL', content.refusal, false);
+      }
+      return content.type === 'output_text' ? content.text ?? '' : '';
+    })
+    .join('')
+    .trim();
+
+  return text ?? '';
 }
 
 function stripJsonFences(text: string): string {

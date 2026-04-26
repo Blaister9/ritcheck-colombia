@@ -328,6 +328,48 @@ LLAMADO DESDE: backend/src/services/pdfGenerator.ts
         color: var(--color-text-soft);
       }
 
+      .closing-page {
+        margin-top: 28px;
+        page-break-before: always;
+      }
+
+      .closing-page h2 {
+        border-bottom: 3px solid var(--color-primary);
+        color: var(--color-primary-dark);
+        font-size: 22px;
+        margin-bottom: 14px;
+        padding-bottom: 8px;
+      }
+
+      .closing-card {
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        margin: 12px 0;
+        padding: 14px;
+        page-break-inside: avoid;
+      }
+
+      .closing-card h3 {
+        font-size: 14px;
+        margin: 0 0 6px;
+      }
+
+      .closing-card p {
+        margin: 0;
+        color: var(--color-text-soft);
+      }
+
+      .closing-quote {
+        background: #fef3c7;
+        border-left: 4px solid #e8a33d;
+        border-radius: 6px;
+        color: #5f3b00;
+        font-size: 13px;
+        font-weight: 700;
+        margin-top: 18px;
+        padding: 14px;
+      }
+
       /* Print */
       @page {
         size: A4;
@@ -386,6 +428,50 @@ LLAMADO DESDE: backend/src/services/pdfGenerator.ts
       <section class="section">
         <h2>Plan de accion sugerido</h2>
         {{ACTION_PLAN_HTML}}
+      </section>
+
+      <section class="closing-page">
+        <h2>Su RIT corregido. ¿Y ahora?</h2>
+        <p>
+          Este reporte le da el camino exacto para llegar al 25 de junio sin multas.
+          Tres recomendaciones honestas:
+        </p>
+
+        <article class="closing-card">
+          <h3>1. Corrija con su abogado o asesor.</h3>
+          <p>
+            Use el texto sugerido. A su abogado le tomara 30 minutos validar lo que
+            aqui le entregamos, no 3 semanas. Le cobrara menos.
+          </p>
+        </article>
+
+        <article class="closing-card">
+          <h3>2. Vuelva a analizar despues de corregir.</h3>
+          <p>
+            Si tiene plan Estandar o PRO, tiene una segunda revision incluida.
+            Subalo y le confirmamos que esta al dia con un certificado fechado
+            para sus archivos.
+          </p>
+        </article>
+
+        <article class="closing-card">
+          <h3>3. Si conoce a otro empresario en su misma situacion, mandale este link: {{REFERRAL_URL}}</h3>
+          <p>
+            Los abogados van a estar saturados las ultimas 4 semanas antes del
+            25 de junio. Avisar con tiempo es un favor real.
+          </p>
+        </article>
+
+        <p class="closing-quote">
+          Los abogados van a estar saturados las ultimas 4 semanas antes del 25 de junio.
+          Avisar con tiempo es un favor real.
+        </p>
+
+        <p>
+          Gracias por confiar en RITCheck.<br />
+          <strong>Edwin Santiago - RITCheck</strong><br />
+          WhatsApp directo: {{WHATSAPP_DISPLAY}}
+        </p>
       </section>
 
       <footer class="disclaimer">
